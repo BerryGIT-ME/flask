@@ -72,13 +72,14 @@ def ai_chat(messages):
         customer_needs = decode_customer_needs(messages)
         log(customer_needs)
         query_results = execute_query_for_costomer_needs(customer_needs)
+        log(f'total lenght of query items - {len(query_results)}')
+
         similar_results = get_product_similar_to_customer_needs(customer_needs)
+        log(f'total len of similar products - {similar_results}')
 
         product_suggestions = combine_query_results_and_similar_products([*query_results, *similar_results])
-
-        log(list(map(lambda x: {x['name']}, product_suggestions)))
-
-        log(system_message)
+        product_names = list(map(lambda x: {x['name']}, product_suggestions))
+        log(f'product names suggested {product_names}')
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -89,6 +90,7 @@ def ai_chat(messages):
 
         if len(product_suggestions)>0:
             message = message + f"\n Here are {len(product_suggestions)} suggestions you might like"
+            
         log('Done!!')
         return message, product_suggestions
     except Exception as e:
