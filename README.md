@@ -14,7 +14,7 @@ Please not that ALL environment variables which includes database credentials an
 
 ## Frontend
 
-- Clone the frontend repo
+- Clone the [frontend](https://github.com/Stutern-E-commerce-AI-Application/ecommerce_chatbot_llm_front_end) repo
 - cd into the repo directory
 - There is no need to create a `.env` file for the front end as a `.env` file is present in the repo already. You may alter the value of the `REACT_APP_API_ENDPOINT` environment variable if by default the flask backend does not run in the specified ip address and port
 - install the packages - `npm install`
@@ -22,7 +22,7 @@ Please not that ALL environment variables which includes database credentials an
 
 ## Backend
 
-- Clone the backend repo
+- Clone the [backend](https://github.com/Stutern-E-commerce-AI-Application/flask) repo
 - cd into the repo directory
 - We strongly recommend that you check out the `with-image-search` branch of the repo. This branch contains updated code and packages for running the app in multimodal configuration. Check the notes about our desigh section to see the justification for this. TLDR - image size too large to deploy.
 - use the sample.env as a template and create a `.env` file.
