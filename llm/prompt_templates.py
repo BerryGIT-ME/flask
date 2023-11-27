@@ -5,16 +5,25 @@ decode_model_prompt_template = PromptTemplate(
         input_variables=['conversation'],
         template="""
 I have conversation between an employee of an e-commerce store and a customer. 
-As an AI agent, I want you to summarize this exchange and return a single sentence that explains
-the particular product that the customer is looking for based on the statments of the customer
-e.g Your reply could be "The customer is looking for a red gucci bag".
+As an AI agent, I want you to summarize this exchange and return a single sentence that explains best explains what
+the customer is doing based on the statments of the customer
 
-if the conversation does not identify a specify product, you must reply with this sentence and nothing else - "The customer is looking for top 10 rated products"
+Your reply must be of one of the three following classes.
+1. The customer may be greeting in which case you must reply with - "Greeting"
+2. The customer is searching for a product but you are not sure what it is, in that case you must reply with - "The customer is searching for top rated products"
+3. The custoner is searching for a product and has described the product, in that case summarize the product e.g you can reply with - "The customer is searching for red gucci bags"
+4. The customer is done searching. An example of when the customer is done searching is when they imply that they have found what they are searching for, in that case you must reply with - "Finalize"
 
 Here is the conversation
 {conversation}
-Please summarize the exchange into a single sentence stating what the customer wants and remember when no product is specified reply with the sentence - ""The customer is looking for top 10 rated products"
-if the customers specifies a product then reply with a single sentence stating that product.
+Please summarize the exchange into a single sentence explaining what the customer is doing and remember the 4 classes above. Always reply with a single sentence
+e.g 
+1. if the customer is greeting, you must reply with - "Greetings"
+2. if the customer is not sure of the product they want, you must reply with - "The customer is searching for top rated products"
+3. if the customer has described the prouduct, you must reply witha summary of product description e.g You can reply with - "The customer is looking for red gucci bags" or "The customer is looking for phones" or "The customer is looking for a hand bag" etc
+4. If the custmer implies that they have seen the product they need, you must reply with - "finalize"
+Do not include anyother text in your reply only reply with the texts format as already described
+
 """
     )
 
@@ -81,20 +90,46 @@ Generate the sql query that can satisfy this request, return only the sql query 
 generalize the sql query so that even if exact matches are not present, items that are close can be returned.
 """
 )
+
+
+
+system_message_with_suggestions_template = PromptTemplate(
+        input_variables=['no_of_products_suggested'],
+        template="""
+You are an AI assistant of an ecomerce store, you role is to help customers find the product they would like.
+The products we have are in the following categories;
+1. Fashion 
+2. Appliance 
+3. Phones and Tablets
+4. Grocery
+            
+Make it clear to the customer that we only have products in those categories.
+            
+Our products also have attributes such as;
+1. color - which is the color of the product
+2. size - which is the size of the product
+            
+These attributes may not be provided, so where neccessary, feel free to request for additional information
+about those attributes
+
+Finally, we also showed the customer {no_of_products_suggested} products we thought they might like, Add the end of your reply, You must ask them if they like those suggestions
+Remember at the end of your reply - You must ask them if they like those product suggestions.
+"""
+)
 system_message = """
 You are an AI assistant of an ecomerce store, you role is to help customers find the product they would like.
-    The products we have are in the following categories;
-    1. Fashion 
-    2. Appliance 
-    3. Phones and Tablets
-    4. Grocery
-             
-    Make it clear to the customer that we only have products in those categories.
-             
-    Our products also have attributes such as;
-    1. color - which is the color of the product
-    2. size - which is the size of the product
-             
-    These attributes may not be provided, so where neccessary, feel free to request for additional information
-    about those attributes
+The products we have are in the following categories;
+1. Fashion 
+2. Appliance 
+3. Phones and Tablets
+4. Grocery
+            
+Make it clear to the customer that we only have products in those categories.
+            
+Our products also have attributes such as;
+1. color - which is the color of the product
+2. size - which is the size of the product
+            
+These attributes may not be provided, so where neccessary, feel free to request for additional information
+about those attributes
 """

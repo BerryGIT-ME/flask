@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI 
 from langchain.llms import OpenAI as langchain_OpenAI
-from llm.prompt_templates import system_message, decode_model_prompt_template, sql_model_prompt_template
+from llm.prompt_templates import system_message, decode_model_prompt_template, sql_model_prompt_template, system_message_with_suggestions_template
 from db.initialize import get_db_connection
 import pandas as pd
 import sys
@@ -11,7 +11,7 @@ from langchain.vectorstores import FAISS
 
 connection = get_db_connection()
 model_temperature = 0.6
-similarity_score = 0.6
+similarity_score = 0.7
 k_nearest_neigbors = 5
 
 api_key = os.getenv('OPEN_AI_API_KEY')
@@ -60,8 +60,8 @@ def combine_query_results_and_similar_products(total_results):
     unique_products = dict()
     for product in total_results:
         unique_products[product['product_id']] = product
-    
-    return [value for key,value in unique_products.items()]
+    suggestions = [value for key,value in unique_products.items()]
+    return suggestions if len(suggestions) <= 5 else suggestions[:6]
 
     
 
@@ -69,36 +69,53 @@ def combine_query_results_and_similar_products(total_results):
 def ai_chat(messages):
     try:
         client = OpenAI()
-        customer_needs = decode_customer_needs(messages)
-        log(customer_needs)
-        
+
         try:
-            query_results = execute_query_for_costomer_needs(customer_needs)
-            log(f'total lenght of query items - {len(query_results)}')
+            customer_needs = retry_n_times(decode_customer_needs, 5, messages=messages)
+            log(customer_needs)
         except:
-            log('Could not execute query - reverting to empty results')
-            query_results = []
+            log('cannot determine customer needs')
+            customer_needs = "Customer is searching for random products"
 
-        try: 
-            similar_results = get_product_similar_to_customer_needs(customer_needs)
-            log(f'total len of similar products - {similar_results}')
-        except:
-            log('Could not find similar products - reverting to empty results')
-            query_results = []
+        # return customer_needs, []
+    
+        if 'greeting' in customer_needs.lower() or 'finalize' in customer_needs.lower():
+            product_suggestions = []
+            log('product suggestions not needed')
+        else:
+            try:
+                query_results = retry_n_times(execute_query_for_costomer_needs, 5, customer_needs=customer_needs)
+                log(f'total lenght of query items - {len(query_results)}')
+            except:
+                log('Could not execute query - reverting to empty results')
+                query_results = []
 
-        product_suggestions = combine_query_results_and_similar_products([*query_results, *similar_results])
-        product_names = list(map(lambda x: {x['name']}, product_suggestions))
-        log(f'product names suggested {product_names}')
+            try: 
+                similar_results = get_product_similar_to_customer_needs(customer_needs)
+                log(f'total len of similar products - {similar_results}')
+            except:
+                log('Could not find similar products - reverting to empty results')
+                query_results = []
+
+            product_suggestions = combine_query_results_and_similar_products([*query_results, *similar_results])
+            product_names = list(map(lambda x: {x['name']}, product_suggestions))
+            log(f'product names suggested {product_names}')
+
+        
+        if len(product_suggestions) > 0:
+            system_input = system_message_with_suggestions_template.format(**{'no_of_products_suggested': len(product_suggestions)})
+        else: 
+            system_input = system_message
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": system_message}, *messages]
+            messages=[{"role": "system", "content": system_input}, *messages]
         )
 
         message = response.choices[0].message.content
 
-        if len(product_suggestions)>0:
-            message = message + f"\n Here are {len(product_suggestions)} suggestions you might like"
+        # if len(product_suggestions)>0:
+        #     message = message + f"\n Here are {len(product_suggestions)} suggestions you might like"
 
         log('Done!!')
         return message, product_suggestions
@@ -108,3 +125,14 @@ def ai_chat(messages):
 
 def log(variable):
     print(variable, file=sys.stderr)
+
+def retry_n_times(func, n_times, **kwargs):
+    for i in range(n_times):
+        try:
+            result = func(**kwargs)
+            return result
+        except:
+            continue
+
+    raise Exception("Could not resolve after several tries")
+
