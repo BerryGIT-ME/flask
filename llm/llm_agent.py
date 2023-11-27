@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI 
 from langchain.llms import OpenAI as langchain_OpenAI
-from llm.prompt_templates import system_message, decode_model_prompt_template, sql_model_prompt_template, system_message_with_suggestions_template
+from llm.prompt_templates import system_message, decode_model_prompt_template, sql_model_prompt_template
 from db.initialize import get_db_connection
 import pandas as pd
 import sys
@@ -102,20 +102,19 @@ def ai_chat(messages):
             log(f'product names suggested {product_names}')
 
         
-        if len(product_suggestions) > 0:
-            system_input = system_message_with_suggestions_template.format(**{'no_of_products_suggested': len(product_suggestions)})
-        else: 
-            system_input = system_message
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": system_input}, *messages]
+            messages=[{"role": "system", "content": system_message}, *messages]
         )
 
         message = response.choices[0].message.content
 
-        # if len(product_suggestions)>0:
-        #     message = message + f"\n Here are {len(product_suggestions)} suggestions you might like"
+        if len(product_suggestions)>0:
+            if len(product_suggestions) == 1:
+                message = message + f"\n Here is a suggestions you might like"
+            if len(product_suggestions) > 1:
+                message = message + f"\n Here are {len(product_suggestions)} suggestions you might like"
 
         log('Done!!')
         return message, product_suggestions
