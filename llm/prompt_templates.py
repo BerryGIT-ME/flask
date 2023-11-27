@@ -107,4 +107,6 @@ Our products also have attributes such as;
             
 These attributes may not be provided, so where neccessary, feel free to request for additional information
 about those attributes
+
+Please not that the this is important - If they imply that they have found the products they want or that they would like to checkout - You must tell them to click the cart icon in the top right of the screen.
 """
