@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv()
 from flask import Flask, jsonify, request
-# from db.vector_store.set_up_vector_store import get_image_vector_from_file, get_similarity
-# import pandas as pd
+from db.vector_store.set_up_vector_store import get_image_vector_from_file, get_similarity
+import pandas as pd
 from llm.llm_agent import ai_chat
 from flask_cors import CORS
 from validate import valid_data
@@ -37,18 +37,18 @@ def upload_file():
     if file and allowed_file(file_name):
         file_name = secure_filename(file_name)
         file_path = os.path.join(image_dir, file_name)
-        # file.save(file_path)
+        file.save(file_path)
 
         # make inference from file
-        # merged_products = pd.read_pickle('./images_index/product_map.pkl')
-        # embeddings = pd.read_pickle('./images_index/image_embeddings.pkl').T
+        merged_products = pd.read_pickle('./images_index/product_map.pkl')
+        embeddings = pd.read_pickle('./images_index/image_embeddings.pkl').T
 
-        # test_image_embeddings = get_image_vector_from_file(file_path)
-        # ids = get_similarity(embeddings, test_image_embeddings, 3)
+        test_image_embeddings = get_image_vector_from_file(file_path)
+        ids = get_similarity(embeddings, test_image_embeddings, 3)
 
-        # results = merged_products[merged_products['product_id'].isin(ids)]
-        # suggestions = [v for k,v in results.T.to_dict().items()]
-        # os.remove(file_path)
+        results = merged_products[merged_products['product_id'].isin(ids)]
+        suggestions = [v for k,v in results.T.to_dict().items()]
+        os.remove(file_path)
         chat_message = '''Hi there, this version of the api does not support image search becuause of build size limitations.
         Please refer to the intro video or the Readme.md of the repo to see how to run that api locally 
         '''
