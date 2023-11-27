@@ -49,11 +49,7 @@ def upload_file():
         results = merged_products[merged_products['product_id'].isin(ids)]
         suggestions = [v for k,v in results.T.to_dict().items()]
         os.remove(file_path)
-        chat_message = '''Hi there, this version of the api does not support image search becuause of build size limitations.
-        Please refer to the intro video or the Readme.md of the repo to see how to run that api locally 
-        '''
-        suggestions = []
-        return jsonify({"chat": {"role": "assistant", "content": chat_message}, "suggestions": suggestions})
+        return jsonify({"chat": {"role": "assistant", "content": "Here are some of the closest matches for that image"}, "suggestions": suggestions})
     else: 
         return jsonify({"chat": {"role": "assistant", "content": wrong_file_upload_message}, "suggestions": []})
     
